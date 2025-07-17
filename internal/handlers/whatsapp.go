@@ -24,18 +24,63 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB) fiber.Handler {
 
 		log.Println("📩 WhatsApp Webhook received")
 
-		entry := body["entry"].([]any)[0].(map[string]any)
-		changes := entry["changes"].([]any)[0].(map[string]any)
-		value := changes["value"].(map[string]any)
-		messages := value["messages"].([]any)
-		if len(messages) == 0 {
+		entries, ok := body["entry"].([]any)
+		if !ok || len(entries) == 0 {
+			log.Println("⚠️ Нет entry")
+			return c.SendStatus(fiber.StatusOK)
+		}
+		entry, ok := entries[0].(map[string]any)
+		if !ok {
+			log.Println("⚠️ Неверный формат entry")
+			return c.SendStatus(fiber.StatusOK)
+		}
+
+		changesList, ok := entry["changes"].([]any)
+		if !ok || len(changesList) == 0 {
+			log.Println("⚠️ Нет changes")
+			return c.SendStatus(fiber.StatusOK)
+		}
+		change, ok := changesList[0].(map[string]any)
+		if !ok {
+			log.Println("⚠️ Неверный формат changes[0]")
+			return c.SendStatus(fiber.StatusOK)
+		}
+
+		value, ok := change["value"].(map[string]any)
+		if !ok {
+			log.Println("⚠️ Нет value")
+			return c.SendStatus(fiber.StatusOK)
+		}
+		messages, ok := value["messages"].([]any)
+		if !ok || len(messages) == 0 {
 			log.Println("⚠️ Нет входящих сообщений")
 			return c.SendStatus(fiber.StatusOK)
 		}
 
-		message := messages[0].(map[string]any)
-		text := message["text"].(map[string]any)["body"].(string)
-		from := message["from"].(string)
+		messageData, ok := messages[0].(map[string]any)
+		if !ok {
+			log.Println("⚠️ Неверный формат message")
+			return c.SendStatus(fiber.StatusOK)
+		}
+
+		textMap, ok := messageData["text"].(map[string]any)
+		if !ok {
+			log.Println("⚠️ Нет поля text")
+			return c.SendStatus(fiber.StatusOK)
+		}
+		text, ok := textMap["body"].(string)
+		if !ok {
+			log.Println("⚠️ Нет поля body")
+			return c.SendStatus(fiber.StatusOK)
+		}
+
+		log.Println("📩 Текст сообщения:", text)
+
+		from, ok := messageData["from"].(string)
+		if !ok {
+			log.Println("⚠️ Нет поля from")
+			return c.SendStatus(fiber.StatusOK)
+		}
 
 		meta := ""
 		if strings.Contains(text, "meta=") {
@@ -43,15 +88,17 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB) fiber.Handler {
 		}
 		parts := strings.Split(meta, "-")
 		if len(parts) != 2 {
-			log.Println("⚠️ Неверный формат meta")
+			log.Println("⚠️ Неверный формат meta:", meta)
 			return c.SendStatus(fiber.StatusOK)
 		}
 
-		restaurantID, err1 := strconv.Atoi(parts[0])
-		tableNumber := parts[1]
-		if err1 != nil {
+		restaurantID, err := strconv.Atoi(parts[0])
+		if err != nil {
+			log.Println("⚠️ Невалидный restaurantID:", parts[0])
 			return c.SendStatus(fiber.StatusOK)
 		}
+
+		tableNumber := parts[1]
 
 		tableCode, err := rkeeper.GetTableCode(cfg, restaurantID, tableNumber)
 		if err != nil {
