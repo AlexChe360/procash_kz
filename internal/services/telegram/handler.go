@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"encoding/json"
+	"log"
 	"strings"
 
 	"github.com/AlexChe360/procash/internal/config"
@@ -24,10 +25,13 @@ func HadleWebhook(cfg config.Config, db *gorm.DB, c *fiber.Ctx) error {
 		case "start":
 			parts := strings.Split(args, "_")
 			if len(parts) != 2 {
+				log.Printf("⚠️ Invalid /start payload: %s", args)
 				return c.SendStatus(fiber.StatusBadRequest)
 			}
 			restaurantId := parts[0]
 			tableNumber := parts[1]
+
+			log.Printf("✅ /start with restaurantId=%s, tableNumber=%s", restaurantId, tableNumber)
 			go SendOrderInfo(cfg, db, update.Message.Chat.ID, restaurantId, tableNumber)
 		}
 	}
