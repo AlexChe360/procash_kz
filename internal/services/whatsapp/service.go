@@ -9,7 +9,7 @@ import (
 )
 
 func SendWhatsAppMessage(token, phoneNumberID, to, message string) error {
-	url := fmt.Sprintf("https://graph.facebook.com/v19.0/%s/messages", phoneNumberID)
+	url := fmt.Sprintf("https://graph.facebook.com/v23.0/%s/messages", phoneNumberID)
 
 	payload := map[string]any{
 		"messaging_product": "whatsapp",
