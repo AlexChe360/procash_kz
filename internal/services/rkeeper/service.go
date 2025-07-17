@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/AlexChe360/procash/internal/config"
@@ -51,11 +52,31 @@ func GetTableCode(cfg config.Config, restaurantID int, tableNumber string) (int,
 		return 0, err
 	}
 
-	tables := resp["tables"].([]any)
+	tablesRaw, ok := resp["tables"]
+	if !ok {
+		log.Println("❌ Поле 'tables' отсутствует в ответе от rKeeper")
+		return 0, fmt.Errorf("missing 'tables' field")
+	}
+
+	tables, ok := tablesRaw.([]any)
+	if !ok {
+		log.Println("❌ Поле 'tables' не массив")
+		return 0, fmt.Errorf("'tables' is not a slice")
+	}
+
 	for _, t := range tables {
-		table := t.(map[string]any)
+		table, ok := t.(map[string]any)
+		if !ok {
+			continue // или log.Println("⚠️ Невалидная структура table")
+		}
+
 		if table["externalNumber"] == tableNumber {
-			return int(table["code"].(float64)), nil
+			codeFloat, ok := table["code"].(float64)
+			if !ok {
+				log.Println("⚠️ Невалидный тип 'code'")
+				continue
+			}
+			return int(codeFloat), nil
 		}
 	}
 
