@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -29,14 +30,18 @@ func SendWhatsAppMessage(token, phoneNumberID, to, message string) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Println("❌ Ошибка отправки запроса:", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
 		responseBody, _ := io.ReadAll(resp.Body)
+		log.Printf("❌ WhatsApp API error: %s\n", responseBody)
 		return fmt.Errorf("WhatsApp API error: %s", responseBody)
 	}
+
+	log.Printf("✅ Сообщение успешно отправлено: %s\n", string(respBody))
 
 	return nil
 }
