@@ -23,6 +23,7 @@ func HadleWebhook(cfg config.Config, db *gorm.DB, c *fiber.Ctx) error {
 
 		switch cmd {
 		case "start":
+			log.Printf("📥 Получен args: %s", args)
 			parts := strings.Split(args, "_")
 			if len(parts) != 2 {
 				log.Printf("⚠️ Invalid /start payload: %s", args)
