@@ -16,6 +16,7 @@ type Config struct {
 	PaymentSecretKey    string
 	PaymentUserId       string
 	PaymentURL          string
+	DefaultRestaurantID string
 }
 
 func Load() Config {
@@ -33,6 +34,7 @@ func Load() Config {
 		PaymentSecretKey:    getEnv("FREEDOM_SECRET_KEY", ""),
 		PaymentUserId:       getEnv("FREEDOM_USER_ID", ""),
 		PaymentURL:          getEnv("FREEDOM_API_URL", ""),
+		DefaultRestaurantID: getEnv("DEFAULT_RESTAURANT_ID", ""),
 	}
 }
 

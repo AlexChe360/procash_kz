@@ -86,19 +86,41 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB) fiber.Handler {
 		if strings.Contains(text, "meta=") {
 			meta = text[strings.Index(text, "meta=")+5:]
 		}
-		parts := strings.Split(meta, "-")
-		if len(parts) != 2 {
-			log.Println("⚠️ Неверный формат meta:", meta)
-			return c.SendStatus(fiber.StatusOK)
-		}
 
-		restaurantID, err := strconv.Atoi(parts[0])
-		if err != nil {
-			log.Println("⚠️ Невалидный restaurantID:", parts[0])
-			return c.SendStatus(fiber.StatusOK)
-		}
+		var restaurantID int
+		var tableNumber string
 
-		tableNumber := parts[1]
+		if meta != "" {
+			parts := strings.Split(meta, "-")
+			if len(parts) == 2 {
+				var err error
+				restaurantID, err = strconv.Atoi(parts[0])
+				if err != nil {
+					log.Println("⚠️ Невалидный restaurantID в meta:", parts[0])
+					return c.SendStatus(fiber.StatusOK)
+				}
+				tableNumber = parts[1]
+			} else {
+				log.Println("⚠️ Неверный формат meta:", meta)
+				return c.SendStatus(fiber.StatusOK)
+			}
+		} else {
+			if strings.Contains(text, "стол №") {
+				numberStart := strings.Index(text, "стол №") + len("стол №")
+				tableNumber = strings.TrimSpace(text[numberStart:])
+				var err1 error
+				restaurantID, err1 = strconv.Atoi(cfg.DefaultRestaurantID)
+				if err1 != nil {
+					log.Println("❌ Ошибка конвертации DefaultRestaurantID:", err1)
+					return c.SendStatus(fiber.StatusInternalServerError)
+				}
+
+				log.Println("ℹ️ Извлечён tableNumber из текста:", tableNumber)
+			} else {
+				log.Println("⚠️ Невозможно извлечь meta или номер стола")
+				return c.SendStatus(fiber.StatusOK)
+			}
+		}
 
 		tableCode, err := rkeeper.GetTableCode(cfg, restaurantID, tableNumber)
 		if err != nil {
