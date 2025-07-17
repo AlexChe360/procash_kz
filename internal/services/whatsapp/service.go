@@ -41,7 +41,5 @@ func SendWhatsAppMessage(token, phoneNumberID, to, message string) error {
 		return fmt.Errorf("WhatsApp API error: %s", responseBody)
 	}
 
-	log.Printf("✅ Сообщение успешно отправлено: %s\n", string(respBody))
-
 	return nil
 }
