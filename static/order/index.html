@@ -62,7 +62,7 @@
             const waPhone = "77473169001";
 
             if (restaurantId && tableNumber) {
-                const tgLink = `https://t.me/${tgBot}?start=restaurantId=${restaurantId}&tableNumber=${tableNumber}`;
+                const tgLink = `https://t.me/${tgBot}?start=${restaurantId}_${tableNumber}`;
 
                 const message = encodeURIComponent(
                     `Здравствуйте! Хочу оплатить счёт за стол №${tableNumber}.`,
