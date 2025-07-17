@@ -17,6 +17,7 @@ type Config struct {
 	PaymentUserId       string
 	PaymentURL          string
 	DefaultRestaurantID string
+	WhatsappApiVersion  string
 }
 
 func Load() Config {
@@ -35,6 +36,7 @@ func Load() Config {
 		PaymentUserId:       getEnv("FREEDOM_USER_ID", ""),
 		PaymentURL:          getEnv("FREEDOM_API_URL", ""),
 		DefaultRestaurantID: getEnv("DEFAULT_RESTAURANT_ID", ""),
+		WhatsappApiVersion:  getEnv("WA_VESRION_API", ""),
 	}
 }
 

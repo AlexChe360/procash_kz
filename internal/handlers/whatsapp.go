@@ -129,7 +129,7 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB) fiber.Handler {
 			to := messageData["from"].(string)
 			errMsg := "⚠️ Произошла ошибка при поиске стола. Уточните номер стола и попробуйте снова."
 
-			err := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhone, to, errMsg)
+			err := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhoneID, to, errMsg)
 			if err != nil {
 				log.Println("❌ Ошибка при отправке WhatsApp-сообщения:", err)
 			}

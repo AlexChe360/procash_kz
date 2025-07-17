@@ -69,7 +69,7 @@ func SendButtons(cfg config.Config, phone, tableNumber, waiterName string, items
 	}
 
 	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", fmt.Sprintf("https://graph.facebook.com/v23.0/%s/messages", cfg.WhatsappPhoneID), bytes.NewBuffer(body))
+	req, _ := http.NewRequest("POST", fmt.Sprintf("https://graph.facebook.com/v22.0/%s/messages", cfg.WhatsappPhoneID), bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+cfg.WhatsapApiToken)
 
