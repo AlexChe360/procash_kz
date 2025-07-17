@@ -99,13 +99,32 @@ func GetOrderInfo(cfg config.Config, restaurantID int, tableCode int) (string, s
 		return "", "", err
 	}
 
-	orders := resp["orders"].([]any)
-	if len(orders) == 0 {
-		return "", "", fmt.Errorf("no open orders")
+	ordersRaw, ok := resp["orders"]
+	if !ok {
+		return "", "", fmt.Errorf("❌ поле 'orders' отсутствует в ответе от rKeeper")
 	}
 
-	order := orders[0].(map[string]any)
-	return order["guid"].(string), order["waiterId"].(string), nil
+	orders, ok := ordersRaw.([]any)
+	if !ok {
+		return "", "", fmt.Errorf("❌ неверный формат 'orders' в ответе от rKeeper")
+	}
+
+	if len(orders) == 0 {
+		return "", "", fmt.Errorf("❌ нет открытых заказов")
+	}
+
+	orderMap, ok := orders[0].(map[string]any)
+	if !ok {
+		return "", "", fmt.Errorf("❌ неверный формат заказа")
+	}
+
+	guid, ok1 := orderMap["guid"].(string)
+	waiterId, ok2 := orderMap["waiterId"].(string)
+	if !ok1 || !ok2 {
+		return "", "", fmt.Errorf("❌ отсутствуют поля 'guid' или 'waiterId'")
+	}
+
+	return guid, waiterId, nil
 }
 
 // Детали заказа (товары и сумма)
