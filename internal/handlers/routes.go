@@ -10,7 +10,7 @@ func RegisterRouter(app *fiber.App, cfg config.Config, db *gorm.DB) {
 	// QR лендинг
 	app.Get("/", QRHandler(cfg, db))
 	app.Get("/privacy", PrivacyHandler())
-	app.Static("/", "./static")
+	app.Static("/assets", "./static")
 
 	// Webhook
 	app.Post("/freedom", FreedomCallback(cfg, db))
