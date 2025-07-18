@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"time"
 )
 
 func SendWhatsAppMessage(token, phoneNumberID, to, message string) error {
@@ -43,34 +42,4 @@ func SendWhatsAppMessage(token, phoneNumberID, to, message string) error {
 	}
 
 	return nil
-}
-
-func SendWhatsAppTyping(token, phoneNumberID, to string, duration time.Duration) {
-	url := fmt.Sprintf("https://graph.facebook.com/v22.0/%s/messages", phoneNumberID)
-
-	payload := map[string]any{
-		"messaging_product": "whatsapp",
-		"to":                to,
-		"type":              "typing_on",
-	}
-
-	body, _ := json.Marshal(payload)
-
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Println("❌ Ошибка отправки запроса:", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		responseBody, _ := io.ReadAll(resp.Body)
-		log.Printf("❌ WhatsApp API error: %s\n", responseBody)
-	}
-
-	time.Sleep(duration)
 }
