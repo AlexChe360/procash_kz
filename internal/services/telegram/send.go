@@ -31,7 +31,6 @@ func SendOrderInfo(cfg config.Config, db *gorm.DB, bot bot.BotClient, chatId int
 		return
 	}
 
-	bot.SendTyping(strconv.FormatInt(chatId, 10), 1*time.Second)
 	guid, waiterID, err := rkeeper.GetOrderInfo(cfg, restaurantID, tableCode)
 	if err != nil {
 		log.Println("❌ Ошибка при получении заказа:", err)
@@ -40,7 +39,6 @@ func SendOrderInfo(cfg config.Config, db *gorm.DB, bot bot.BotClient, chatId int
 		return
 	}
 
-	bot.SendTyping(strconv.FormatInt(chatId, 10), 1*time.Second)
 	_, amount, err := rkeeper.GetOrderDetails(cfg, restaurantID, guid)
 	if err != nil {
 		log.Println("❌ Ошибка при получении деталей заказа:", err)
@@ -49,7 +47,6 @@ func SendOrderInfo(cfg config.Config, db *gorm.DB, bot bot.BotClient, chatId int
 		return
 	}
 
-	bot.SendTyping(strconv.FormatInt(chatId, 10), 1*time.Second)
 	waiterName, err := rkeeper.GetWaiterName(cfg, restaurantID, waiterID)
 	if err != nil {
 		log.Println("❌ Ошибка при получении имени официанта:", err)
@@ -60,7 +57,6 @@ func SendOrderInfo(cfg config.Config, db *gorm.DB, bot bot.BotClient, chatId int
 
 	description := fmt.Sprintf("Оплата счета: #%s", guid)
 
-	bot.SendTyping(strconv.FormatInt(chatId, 10), 1*time.Second)
 	payment, err := freedom.GenerateURL(cfg, amount, description)
 	if err != nil {
 		log.Println("Ошибка при создании оплаты:", err)

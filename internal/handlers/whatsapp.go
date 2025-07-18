@@ -130,11 +130,6 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB) fiber.Handler {
 			}
 		}
 
-		time.Sleep(1 * time.Second)
-		tableCodeErr := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhoneID, to, "Загрузка...")
-		if tableCodeErr != nil {
-			log.Println("❌ Ошибка при отправке WhatsApp-сообщения:", err)
-		}
 		tableCode, err := rkeeper.GetTableCode(cfg, restaurantID, tableNumber)
 		if err != nil {
 			log.Println("❌ tableCode:", err)
@@ -149,33 +144,18 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB) fiber.Handler {
 			return c.SendStatus(fiber.StatusOK)
 		}
 
-		time.Sleep(1 * time.Second)
-		orderGUIDErr := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhoneID, to, "Загрузка...")
-		if orderGUIDErr != nil {
-			log.Println("❌ Ошибка при отправке WhatsApp-сообщения:", err)
-		}
 		orderGUID, waiterID, err := rkeeper.GetOrderInfo(cfg, restaurantID, tableCode)
 		if err != nil {
 			log.Println("❌ orderInfo:", err)
 			return c.SendStatus(fiber.StatusOK)
 		}
 
-		time.Sleep(1 * time.Second)
-		itemsErr := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhoneID, to, "Загрузка...")
-		if itemsErr != nil {
-			log.Println("❌ Ошибка при отправке WhatsApp-сообщения:", err)
-		}
 		items, totalSum, err := rkeeper.GetOrderDetails(cfg, restaurantID, orderGUID)
 		if err != nil {
 			log.Println("❌ orderDetails:", err)
 			return c.SendStatus(fiber.StatusOK)
 		}
 
-		time.Sleep(1 * time.Second)
-		waiterNameErr := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhoneID, to, "Загрузка...")
-		if waiterNameErr != nil {
-			log.Println("❌ Ошибка при отправке WhatsApp-сообщения:", err)
-		}
 		waiterName, err := rkeeper.GetWaiterName(cfg, restaurantID, waiterID)
 		if err != nil {
 			log.Println("❌ waiterName:", err)
