@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -26,6 +28,8 @@ func NewWhatsappClient(cfg config.Config) *WhatsappClient {
 
 func (w *WhatsappClient) SendTyping(to string, duration time.Duration) {
 
+	url := fmt.Sprintf("https://graph.facebook.com/v23.0/%s/messages", w.PhoneID)
+
 	body := map[string]any{
 		"message_product": "whatsapp",
 		"to":              to,
@@ -33,14 +37,21 @@ func (w *WhatsappClient) SendTyping(to string, duration time.Duration) {
 	}
 
 	jsonBody, _ := json.Marshal(body)
-	req, _ := http.NewRequest(
-		"POST",
-		"https://graph.facebook.com/v23.0/"+w.PhoneID+"/messages",
-		bytes.NewBuffer(jsonBody))
-
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Authorization", "Bearer "+w.Token)
 	req.Header.Set("Content-Type", "application/json")
-	w.APIClient.Do(req)
+
+	resp, err := w.APIClient.Do(req)
+	if err != nil {
+		log.Println("❌ Ошибка отправки запроса:", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("❌ WhatsApp API error (%d): %s", resp.StatusCode, bodyBytes)
+	}
+
 	time.Sleep(duration)
 }
 
@@ -57,9 +68,27 @@ func (w *WhatsappClient) SendMessage(to string, text string) error {
 		},
 	}
 	jsonBody, _ := json.Marshal(body)
+
+	log.Printf("➡️ Отправка WhatsApp на %s: %s", to, text)
+
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Authorization", "Bearer "+w.Token)
 	req.Header.Set("Content-Type", "application/json")
-	_, err := w.APIClient.Do(req)
+
+	resp, err := w.APIClient.Do(req)
+	if err != nil {
+		log.Println("❌ Ошибка отправки запроса:", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("❌ WhatsApp API error (%d): %s", resp.StatusCode, bodyBytes)
+		return fmt.Errorf("whatsapp api error: %s", bodyBytes)
+	}
+
+	log.Println("✅ Успешно отправлено WhatsApp сообщение")
+
 	return err
 }
