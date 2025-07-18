@@ -25,10 +25,10 @@ func NewWhatsappClient(cfg config.Config) *WhatsappClient {
 	}
 }
 
-func (w *WhatsappClient) SendTyping(chatID string, duration time.Duration) {
+func (w *WhatsappClient) SendTyping(to string, duration time.Duration) {
 	body := map[string]any{
 		"message_product": "whatsapp",
-		"to":              chatID,
+		"to":              to,
 		"type":            "typing_on",
 	}
 	jsonBody, _ := json.Marshal(body)
@@ -43,10 +43,10 @@ func (w *WhatsappClient) SendTyping(chatID string, duration time.Duration) {
 	time.Sleep(duration)
 }
 
-func (w *WhatsappClient) SendMessage(chatID string, text string) error {
+func (w *WhatsappClient) SendMessage(to string, text string) error {
 	body := map[string]any{
 		"messaging_product": "whatsapp",
-		"to":                chatID,
+		"to":                to,
 		"type":              "text",
 		"text": map[string]string{
 			"body": text,

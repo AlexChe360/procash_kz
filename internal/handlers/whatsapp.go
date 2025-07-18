@@ -8,6 +8,7 @@ import (
 
 	"github.com/AlexChe360/procash/internal/config"
 	"github.com/AlexChe360/procash/internal/models"
+	"github.com/AlexChe360/procash/internal/services/bot"
 	"github.com/AlexChe360/procash/internal/services/freedom"
 	"github.com/AlexChe360/procash/internal/services/rkeeper"
 	"github.com/AlexChe360/procash/internal/services/whatsapp"
@@ -15,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func WhatsappWebhook(cfg config.Config, db *gorm.DB) fiber.Handler {
+func WhatsappWebhook(cfg config.Config, db *gorm.DB, bot bot.BotClient) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var body map[string]any
 		if err := c.BodyParser(&body); err != nil {
@@ -87,6 +88,10 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB) fiber.Handler {
 			meta = text[strings.Index(text, "meta=")+5:]
 		}
 
+		to := messageData["from"].(string)
+
+		bot.SendTyping(to, 2*time.Second)
+
 		var restaurantID int
 		var tableNumber string
 
@@ -122,14 +127,15 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB) fiber.Handler {
 			}
 		}
 
+		bot.SendTyping(to, 1*time.Second)
 		tableCode, err := rkeeper.GetTableCode(cfg, restaurantID, tableNumber)
 		if err != nil {
 			log.Println("❌ tableCode:", err)
 
-			to := messageData["from"].(string)
 			errMsg := "⚠️ Произошла ошибка при поиске стола. Уточните номер стола и попробуйте снова."
 
-			err := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhoneID, to, errMsg)
+			err := bot.SendMessage(to, errMsg)
+			// err := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhoneID, to, errMsg)
 			if err != nil {
 				log.Println("❌ Ошибка при отправке WhatsApp-сообщения:", err)
 			}
@@ -137,24 +143,28 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB) fiber.Handler {
 			return c.SendStatus(fiber.StatusOK)
 		}
 
+		bot.SendTyping(to, 1*time.Second)
 		orderGUID, waiterID, err := rkeeper.GetOrderInfo(cfg, restaurantID, tableCode)
 		if err != nil {
 			log.Println("❌ orderInfo:", err)
 			return c.SendStatus(fiber.StatusOK)
 		}
 
+		bot.SendTyping(to, 1*time.Second)
 		items, totalSum, err := rkeeper.GetOrderDetails(cfg, restaurantID, orderGUID)
 		if err != nil {
 			log.Println("❌ orderDetails:", err)
 			return c.SendStatus(fiber.StatusOK)
 		}
 
+		bot.SendTyping(to, 1*time.Second)
 		waiterName, err := rkeeper.GetWaiterName(cfg, restaurantID, waiterID)
 		if err != nil {
 			log.Println("❌ waiterName:", err)
 			waiterName = "Неизвестно"
 		}
 
+		bot.SendTyping(to, 1*time.Second)
 		payment, err := freedom.GenerateURL(cfg, totalSum, "Оплата счёта")
 		if err != nil {
 			log.Println("❌ FreedomPay:", err)
