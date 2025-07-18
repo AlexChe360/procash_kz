@@ -8,21 +8,21 @@ import (
 
 	"github.com/AlexChe360/procash/internal/config"
 	"github.com/AlexChe360/procash/internal/models"
+	"github.com/AlexChe360/procash/internal/services/bot"
 	"github.com/AlexChe360/procash/internal/services/freedom"
 	"github.com/AlexChe360/procash/internal/services/rkeeper"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"gorm.io/gorm"
 )
 
-func SendOrderInfo(cfg config.Config, db *gorm.DB, chatId int64, restaurantIdStr, tableNumberStr string) {
-	bot, err := tgbotapi.NewBotAPI(cfg.TGBotToken)
-	if err != nil {
-		return
-	}
+func SendOrderInfo(cfg config.Config, db *gorm.DB, bot bot.BotClient, chatId int64, restaurantIdStr, tableNumberStr string) {
+
+	bot.SendTyping(strconv.FormatInt(chatId, 10), 2*time.Second)
 
 	restaurantID, _ := strconv.Atoi(restaurantIdStr)
 	tableNumber, _ := strconv.Atoi(tableNumberStr)
 
+	bot.SendTyping(strconv.FormatInt(chatId, 10), 1*time.Second)
 	tableCode, err := rkeeper.GetTableCode(cfg, restaurantID, tableNumberStr)
 	if err != nil {
 		log.Println("❌ Ошибка при получении tableCode:", err)
@@ -30,6 +30,8 @@ func SendOrderInfo(cfg config.Config, db *gorm.DB, chatId int64, restaurantIdStr
 		bot.Send(msg)
 		return
 	}
+
+	bot.SendTyping(strconv.FormatInt(chatId, 10), 1*time.Second)
 	guid, waiterID, err := rkeeper.GetOrderInfo(cfg, restaurantID, tableCode)
 	if err != nil {
 		log.Println("❌ Ошибка при получении заказа:", err)
@@ -37,6 +39,8 @@ func SendOrderInfo(cfg config.Config, db *gorm.DB, chatId int64, restaurantIdStr
 		bot.Send(msg)
 		return
 	}
+
+	bot.SendTyping(strconv.FormatInt(chatId, 10), 1*time.Second)
 	_, amount, err := rkeeper.GetOrderDetails(cfg, restaurantID, guid)
 	if err != nil {
 		log.Println("❌ Ошибка при получении деталей заказа:", err)
@@ -44,6 +48,8 @@ func SendOrderInfo(cfg config.Config, db *gorm.DB, chatId int64, restaurantIdStr
 		bot.Send(msg)
 		return
 	}
+
+	bot.SendTyping(strconv.FormatInt(chatId, 10), 1*time.Second)
 	waiterName, err := rkeeper.GetWaiterName(cfg, restaurantID, waiterID)
 	if err != nil {
 		log.Println("❌ Ошибка при получении имени официанта:", err)
@@ -54,6 +60,7 @@ func SendOrderInfo(cfg config.Config, db *gorm.DB, chatId int64, restaurantIdStr
 
 	description := fmt.Sprintf("Оплата счета: #%s", guid)
 
+	bot.SendTyping(strconv.FormatInt(chatId, 10), 1*time.Second)
 	payment, err := freedom.GenerateURL(cfg, amount, description)
 	if err != nil {
 		log.Println("Ошибка при создании оплаты:", err)
