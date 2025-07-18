@@ -26,11 +26,10 @@ func main() {
 	}
 
 	tgClient := bot.NewTelegramClient(api)
-	waClient := bot.NewWhatsappClient(cfg)
 
 	app := fiber.New()
 
-	handlers.RegisterRouter(app, cfg, db, tgClient, waClient)
+	handlers.RegisterRouter(app, cfg, db, tgClient)
 
 	log.Printf("Server running on port %s", cfg.Port)
 	if err := app.Listen(":" + cfg.Port); err != nil {
