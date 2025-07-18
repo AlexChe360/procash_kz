@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func WhatsappWebhook(cfg config.Config, db *gorm.DB, bot bot.BotClient) fiber.Handler {
+func WhatsappWebhook(cfg config.Config, db *gorm.DB, bot bot.WhatsAppClient) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var body map[string]any
 		if err := c.BodyParser(&body); err != nil {
@@ -89,7 +89,6 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB, bot bot.BotClient) fiber.Ha
 		}
 
 		to := messageData["from"].(string)
-
 		bot.SendTyping(to, 2*time.Second)
 
 		var restaurantID int
@@ -133,7 +132,6 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB, bot bot.BotClient) fiber.Ha
 			log.Println("❌ tableCode:", err)
 
 			errMsg := "⚠️ Произошла ошибка при поиске стола. Уточните номер стола и попробуйте снова."
-
 			err := bot.SendMessage(to, errMsg)
 			// err := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhoneID, to, errMsg)
 			if err != nil {

@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func RegisterRouter(app *fiber.App, cfg config.Config, db *gorm.DB, bot bot.BotClient, waBot bot.BotClient) {
+func RegisterRouter(app *fiber.App, cfg config.Config, db *gorm.DB, bot bot.BotClient, waBot bot.WhatsAppClient) {
 	// QR лендинг
 	app.Get("/", QRHandler(cfg, db))
 	app.Get("/privacy", PrivacyHandler())

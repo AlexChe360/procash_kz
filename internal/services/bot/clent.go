@@ -11,3 +11,8 @@ type BotClient interface {
 	SendMessage(chatId, text string) error
 	Send(c tgbotapi.Chattable) (tgbotapi.Message, error)
 }
+
+type WhatsAppClient interface {
+	SendTyping(to string, duration time.Duration)
+	SendMessage(to, text string) error
+}
