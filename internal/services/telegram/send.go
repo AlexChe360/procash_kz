@@ -24,9 +24,33 @@ func SendOrderInfo(cfg config.Config, db *gorm.DB, chatId int64, restaurantIdStr
 	tableNumber, _ := strconv.Atoi(tableNumberStr)
 
 	tableCode, err := rkeeper.GetTableCode(cfg, restaurantID, tableNumberStr)
-	guid, waiterID, _ := rkeeper.GetOrderInfo(cfg, restaurantID, tableCode)
-	_, amount, _ := rkeeper.GetOrderDetails(cfg, restaurantID, guid)
-	waiterName, _ := rkeeper.GetWaiterName(cfg, restaurantID, waiterID)
+	if err != nil {
+		log.Println("❌ Ошибка при получении tableCode:", err)
+		msg := tgbotapi.NewMessage(chatId, "Ошибка при получении информации о столе. Попробуйте позже.")
+		bot.Send(msg)
+		return
+	}
+	guid, waiterID, err := rkeeper.GetOrderInfo(cfg, restaurantID, tableCode)
+	if err != nil {
+		log.Println("❌ Ошибка при получении заказа:", err)
+		msg := tgbotapi.NewMessage(chatId, "Ошибка при получении заказа. Попробуйте позже.")
+		bot.Send(msg)
+		return
+	}
+	_, amount, err := rkeeper.GetOrderDetails(cfg, restaurantID, guid)
+	if err != nil {
+		log.Println("❌ Ошибка при получении деталей заказа:", err)
+		msg := tgbotapi.NewMessage(chatId, "Ошибка при получении суммы заказа. Попробуйте позже.")
+		bot.Send(msg)
+		return
+	}
+	waiterName, err := rkeeper.GetWaiterName(cfg, restaurantID, waiterID)
+	if err != nil {
+		log.Println("❌ Ошибка при получении имени официанта:", err)
+		msg := tgbotapi.NewMessage(chatId, "Ошибка при получении имени официанта. Попробуйте позже.")
+		bot.Send(msg)
+		return
+	}
 
 	description := fmt.Sprintf("Оплата счета: #%s", guid)
 
@@ -51,7 +75,7 @@ func SendOrderInfo(cfg config.Config, db *gorm.DB, chatId int64, restaurantIdStr
 
 	text := fmt.Sprintf(
 		"*Счёт к оплате*\n\nСтол: `%s`\nСумма: *%d* ₸\nОфициант: `%s`\n\n[Оплатить счёт](%s)",
-		tableNumber,
+		strconv.Itoa(tableNumber),
 		amount,
 		waiterName,
 		payment["redirect_url"],
