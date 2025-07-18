@@ -25,6 +25,22 @@ func HadleWebhook(cfg config.Config, db *gorm.DB, bot bot.BotClient, c *fiber.Ct
 		switch cmd {
 		case "start":
 			log.Printf("📥 Получен args: %s", args)
+			if clean, ok := strings.CutPrefix(args, "restaurantId="); ok {
+				parts := strings.Split(clean, "_")
+
+				if len(parts) != 2 {
+					log.Printf("⚠️ Invalid /start payload (restaurantId= format): %s", args)
+					return c.SendStatus(fiber.StatusBadRequest)
+				}
+
+				restaurantID := parts[0]
+				tableNumber := parts[1]
+
+				log.Printf("✅ /start with restaurantId=%s, tableNumber=%s (old format)", restaurantID, tableNumber)
+				go SendOrderInfo(cfg, db, bot, update.Message.Chat.ID, restaurantID, tableNumber)
+				return c.SendStatus(fiber.StatusOK)
+			}
+
 			parts := strings.Split(args, "_")
 			if len(parts) != 2 {
 				log.Printf("⚠️ Invalid /start payload: %s", args)
