@@ -16,7 +16,7 @@ func RegisterRouter(app *fiber.App, cfg config.Config, db *gorm.DB, bot bot.BotC
 	// Webhook
 	app.Post("/freedom", FreedomCallback(cfg, db))
 	app.Post("/telegram", TelegramWebhook(cfg, db, bot))
-	app.Post("/whatsapp", WhatsappWebhook(cfg, db))
+	app.Post("/whatsapp", WhatsappWebhook(cfg, db, bot))
 
 	// Пинг для проверки
 	app.Get("/healthz", func(c *fiber.Ctx) error {
