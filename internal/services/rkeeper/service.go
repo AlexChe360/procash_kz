@@ -142,9 +142,24 @@ func GetOrderDetails(cfg config.Config, restaurantID int, orderGUID string) (ite
 		return nil, 0, err
 	}
 
-	rawItems := resp["items"].([]any)
-	for _, i := range rawItems {
-		item := i.(map[string]any)
+	rawItems, ok := resp["items"]
+	if !ok {
+		log.Println("❌ 'items' отсутствует в ответе от rKeeper")
+		return nil, 0, fmt.Errorf("missing 'items' field")
+	}
+
+	itemsSlice, ok := rawItems.([]any)
+	if !ok {
+		log.Println("❌ 'items' не является массивом")
+		return nil, 0, fmt.Errorf("'items' is not a slice")
+	}
+
+	for _, i := range itemsSlice {
+		item, ok := i.(map[string]any)
+		if !ok {
+			log.Println("⚠️ Пропущен элемент: некорректная структура item")
+			continue
+		}
 		items = append(items, map[string]any{
 			"name":     item["name"],
 			"quantity": item["quantity"],
@@ -152,8 +167,19 @@ func GetOrderDetails(cfg config.Config, restaurantID int, orderGUID string) (ite
 		})
 	}
 
-	sum := int(resp["totalSum"].(float64))
-	return items, sum, nil
+	rawSum, ok := resp["totalSum"]
+	if !ok {
+		log.Println("❌ 'totalSum' отсутствует в ответе")
+		return items, 0, fmt.Errorf("missing 'totalSum' field")
+	}
+
+	sumFloat, ok := rawSum.(float64)
+	if !ok {
+		fmt.Println("❌ 'totalSum' не является числом")
+		return items, 0, fmt.Errorf("invalid 'totalSum' type")
+	}
+
+	return items, int(sumFloat), nil
 }
 
 // Получение имени официанта
@@ -170,11 +196,36 @@ func GetWaiterName(cfg config.Config, restaurantID int, waiterID string) (string
 		return "", err
 	}
 
-	employees := resp["employees"].([]any)
+	employeesRaw, ok := resp["employees"]
+	if !ok {
+		fmt.Println("❌ 'employees' отсутствует в ответе от rKeeper")
+		return "Unknown", fmt.Errorf("missing 'employees' field")
+	}
+
+	employees, ok := employeesRaw.([]any)
+	if !ok {
+		fmt.Println("❌ 'employees' не массив")
+		return "Unknown", fmt.Errorf("employees' is not a slice")
+	}
+
 	for _, e := range employees {
-		emp := e.(map[string]any)
-		if emp["id"] == waiterID {
-			return emp["name"].(string), nil
+		emp, ok := e.(map[string]any)
+		if !ok {
+			log.Println("⚠️ Пропущен элемент: некорректная структура employee")
+			continue
+		}
+		id, ok := emp["id"].(string)
+		if !ok {
+			log.Println("⚠️ Пропущен элемент: 'id' не строка")
+			continue
+		}
+		if id == waiterID {
+			name, ok := emp["name"].(string)
+			if !ok {
+				log.Println("⚠️ 'name' не строка")
+				return "Unknown", nil
+			}
+			return name, nil
 		}
 	}
 
