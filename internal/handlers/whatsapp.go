@@ -89,7 +89,6 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB, bot bot.WhatsAppClient) fib
 		}
 
 		to := messageData["from"].(string)
-		bot.SendTyping(to, 2*time.Second)
 
 		var restaurantID int
 		var tableNumber string
@@ -126,14 +125,13 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB, bot bot.WhatsAppClient) fib
 			}
 		}
 
-		bot.SendTyping(to, 1*time.Second)
 		tableCode, err := rkeeper.GetTableCode(cfg, restaurantID, tableNumber)
 		if err != nil {
 			log.Println("❌ tableCode:", err)
 
 			errMsg := "⚠️ Произошла ошибка при поиске стола. Уточните номер стола и попробуйте снова."
-			err := bot.SendMessage(to, errMsg)
-			// err := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhoneID, to, errMsg)
+
+			err := whatsapp.SendWhatsAppMessage(cfg.WhatsapApiToken, cfg.WhatsappPhoneID, to, errMsg)
 			if err != nil {
 				log.Println("❌ Ошибка при отправке WhatsApp-сообщения:", err)
 			}
@@ -141,28 +139,24 @@ func WhatsappWebhook(cfg config.Config, db *gorm.DB, bot bot.WhatsAppClient) fib
 			return c.SendStatus(fiber.StatusOK)
 		}
 
-		bot.SendTyping(to, 1*time.Second)
 		orderGUID, waiterID, err := rkeeper.GetOrderInfo(cfg, restaurantID, tableCode)
 		if err != nil {
 			log.Println("❌ orderInfo:", err)
 			return c.SendStatus(fiber.StatusOK)
 		}
 
-		bot.SendTyping(to, 1*time.Second)
 		items, totalSum, err := rkeeper.GetOrderDetails(cfg, restaurantID, orderGUID)
 		if err != nil {
 			log.Println("❌ orderDetails:", err)
 			return c.SendStatus(fiber.StatusOK)
 		}
 
-		bot.SendTyping(to, 1*time.Second)
 		waiterName, err := rkeeper.GetWaiterName(cfg, restaurantID, waiterID)
 		if err != nil {
 			log.Println("❌ waiterName:", err)
 			waiterName = "Неизвестно"
 		}
 
-		bot.SendTyping(to, 1*time.Second)
 		payment, err := freedom.GenerateURL(cfg, totalSum, "Оплата счёта")
 		if err != nil {
 			log.Println("❌ FreedomPay:", err)
